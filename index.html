@@ -12,13 +12,15 @@
             canv.height = 300;
 
             class Bullet {
-                constructor() {
+                constructor(shipWidth) {
+                    this.id = Date.now() + Math.random();
                     this.isActive = false;
                     this.color = 'red';
                     this.height = 15;
                     this.width = 5;
                     this.startPositionX = 0;
-                    this.positionOffset = 0;
+                    this.positionOffsetY = 0;
+                    this.positionOffsetX = (shipWidth - this.width) / 2;
                     this.step = 10;
                     this.isOffCanv = false;
                 }
@@ -26,30 +28,47 @@
                 drawBullet(positionX, positionY) {
                     //track current ship's position if bullet is passive
                     if(!this.isActive) {
-                        this.startPositionX = positionX
+                        this.startPositionX = positionX + this.positionOffsetX;
                     }
 
                     //move bullet up if active
                     if(this.isActive) {
-                        this.positionOffset += this.step;
+                        this.positionOffsetY += this.step;
                     }
 
                     ctx.fillStyle = this.color;
-                    ctx.fillRect(this.startPositionX + 12.5, positionY - this.positionOffset, this.width, this.height);
+                    ctx.fillRect(this.startPositionX, positionY - this.positionOffsetY, this.width, this.height);
                 }
 
-                activate(position) {
+                activate(positionX) {
                     this.isActive = true;
 
                     //get bullet x possition if active
-                    this.startPositionX = position
+                    this.startPositionX = positionX + this.positionOffsetX;
                 }
 
                 //checks if bullet is out of canvas
                 checkIsOffCanv(canvHeight) {
-                    if(this.positionOffset > canvHeight) {
+                    if(this.positionOffsetY > canvHeight) {
                         this.isOffCanv = true;
                     };
+                }
+            }
+
+            class Foe {
+                constructor(positionX, positionY) {
+                    this.id = Date.now() + Math.random();
+                    this.color = 'violet';
+                    this.width = 30;
+                    this.height = 30;
+                    this.position = {
+                            x: positionX,
+                            y: positionY
+                        };
+                }
+                drawFoe() {
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
                 }
             }
 
@@ -62,11 +81,26 @@
                     y: 0
                 },
                 step: 10,
-                charge: [new Bullet()],
+                charge: [],
+
+                setInitialShipPosition() {
+                    this.position.x = canv.width / 2 - this.width / 2;
+                    this.position.y = canv.height - spaceShip.height
+                },
+
+                drawShip() {
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+                },
 
                 drawBullets() {
+                    //load gun if empty
+                    if(this.charge.length < 1) {
+                        this.charge.push(new Bullet(this.width));
+                    };
+
                     this.charge.forEach(bullet => {
-                        bullet.drawBullet(this.position.x, 300 - 30);
+                        bullet.drawBullet(this.position.x, canv.height - this.width);
 
                         //check if bullets are out of canvas
                         bullet.checkIsOffCanv(canv.height);
@@ -80,7 +114,7 @@
 
                 shot() {
                     //reload gun
-                    this.charge.unshift(new Bullet());
+                    this.charge.unshift(new Bullet(this.width));
 
                     //shot first bullet in charge
                     this.charge[0].activate(this.position.x);
@@ -89,19 +123,54 @@
 
 
 
-            spaceShip.position.y = canv.height - spaceShip.height
-            
+            spaceShip.setInitialShipPosition();
+
+            const foesNum = 7;
+            const positionY = 10;
+            let foes = [];
+            for(let i = 0; i < 7; i++) {
+                const spaceBetween = (canv.width - foesNum * 30) / (foesNum + 1);
+                foes.push(new Foe(30 * i + spaceBetween * (i + 1), positionY));
+            }
 
             setInterval(() => {
+                //draw canvas background
                 ctx.fillStyle = "grey";
                 ctx.fillRect(0, 0, canv.width, canv.height);
 
-                ctx.fillStyle = spaceShip.color;
-                ctx.fillRect(spaceShip.position.x, spaceShip.position.y, spaceShip.width, spaceShip.height);
+                //draw ship
+                spaceShip.drawShip();
+
+                //draw foes
+                foes.forEach(foe => {
+                    foe.drawFoe();
+                });
+
+                //detect collision
+                spaceShip.charge.forEach(bullet => {
+                    if((canv.height - bullet.positionOffsetY - 60) === positionY) {
+                        const bulletContactArea = { leftConer: bullet.startPositionX, rightConer: bullet.startPositionX + bullet.width};
+                        foes.forEach((foe, i) => {
+                            const foeContactArea = { leftConer: foe.position.x, rightConer: foe.position.x + foe.width };
+                            if((bulletContactArea.leftConer >= foeContactArea.leftConer && bulletContactArea.leftConer <= foeContactArea.rightConer) ||
+                            (bulletContactArea.rightConer >= foeContactArea.leftConer && bulletContactArea.rightConer <= foeContactArea.rightConer)) {
+                                //kill foe
+                                foes = foes.filter(fo => {
+                                    return fo.id !== foe.id
+                                })
+                                //remove bullet
+                                spaceShip.charge = spaceShip.charge.filter(bul => {
+                                    return bul.id !== bullet.id;
+                                })
+                            };
+                        });
+                    };
+                });
 
                 //draw all bullets
                 spaceShip.drawBullets();
 
+                //preven ship form going beyond canvas
                 if(spaceShip.position.x > canv.width - spaceShip.width){
                     spaceShip.position.x = canv.width - spaceShip.width
                 }
