@@ -106,22 +106,43 @@
                     spaceShip.position.x = canv.width - spaceShip.width
                 }
                 if(spaceShip.position.x < 0){
-                    spaceShip.position.x = 0 - spaceShip.position.x
+                    spaceShip.position.x = 0;
                 }
-            }, 100);
+            }, 50);
 
-            document.addEventListener("keyup", (e) => {
+
+            let clear = null;
+            document.addEventListener("keydown", (e) => {
                 if(e.code === "ArrowLeft"){
-                    spaceShip.position.x -= spaceShip.step
-                }
-                
+                    if(e.repeat) return;
+                    if(clear) {
+                        clearInterval(clear);
+                        clear = null;
+                    }
+                    clear = setInterval(() => {spaceShip.position.x -= spaceShip.step}, 50);
+                };
+
                 if(e.code === "ArrowRight"){
-                    spaceShip.position.x += spaceShip.step
-                }
+                    if(e.repeat) return;
+                    if(clear) {
+                        clearInterval(clear);
+                        clear = null;
+                    }
+                    clear = setInterval(() => {spaceShip.position.x += spaceShip.step}, 50);
+                };
                 
                 if(e.code === "Space"){
+                    if(e.repeat) return;
                     spaceShip.shot();
-                }
+                };
+            })
+
+            document.addEventListener('keyup' , (e) => {
+                if(e.code === "ArrowLeft" || e.code === "ArrowRight") {
+                    if(!clear) return;
+                    clearInterval(clear);
+                    clear = null;
+                };
             })
 
         </script>
