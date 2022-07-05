@@ -11,6 +11,48 @@
             canv.width = 300;
             canv.height = 300;
 
+            class Bullet {
+                constructor() {
+                    this.isActive = false;
+                    this.color = 'red';
+                    this.height = 15;
+                    this.width = 5;
+                    this.startPositionX = 0;
+                    this.positionOffset = 0;
+                    this.step = 10;
+                    this.isOffCanv = false;
+                }
+
+                drawBullet(positionX, positionY) {
+                    //track current ship's position if bullet is passive
+                    if(!this.isActive) {
+                        this.startPositionX = positionX
+                    }
+
+                    //move bullet up if active
+                    if(this.isActive) {
+                        this.positionOffset += this.step;
+                    }
+
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(this.startPositionX + 12.5, positionY - this.positionOffset, this.width, this.height);
+                }
+
+                activate(position) {
+                    this.isActive = true;
+
+                    //get bullet x possition if active
+                    this.startPositionX = position
+                }
+
+                //checks if bullet is out of canvas
+                checkIsOffCanv(canvHeight) {
+                    if(this.positionOffset > canvHeight) {
+                        this.isOffCanv = true;
+                    };
+                }
+            }
+
             const spaceShip = {
                 color: "blue",
                 width: 30,
@@ -20,23 +62,32 @@
                     y: 0
                 },
                 step: 10,
-                lazer: {
-                    color: 'red',
-                    height: 15,
-                    width: 5,
-                    positionOffset: 0,
-                    speed: 50,
+                charge: [new Bullet()],
 
-                    drawLazer(positionX, positionY) {
-                        ctx.fillStyle = this.color;
-                        ctx.fillRect(positionX + 12, positionY + this.positionOffset, this.width, this.height);
-                    },
+                drawBullets() {
+                    this.charge.forEach(bullet => {
+                        bullet.drawBullet(this.position.x, 300 - 30);
 
-                    fire() {
-                        this.positionOffset.y += this.speed;
-                    }
+                        //check if bullets are out of canvas
+                        bullet.checkIsOffCanv(canv.height);
+                    });
+
+                    //clean bullets that are out of canvas
+                    this.charge = this.charge.filter(bullet => {
+                        return bullet.isOffCanv === false;
+                    });
+                },
+
+                shot() {
+                    //reload gun
+                    this.charge.unshift(new Bullet());
+
+                    //shot first bullet in charge
+                    this.charge[0].activate(this.position.x);
                 }
             }
+
+
 
             spaceShip.position.y = canv.height - spaceShip.height
             
@@ -48,7 +99,8 @@
                 ctx.fillStyle = spaceShip.color;
                 ctx.fillRect(spaceShip.position.x, spaceShip.position.y, spaceShip.width, spaceShip.height);
 
-                
+                //draw all bullets
+                spaceShip.drawBullets();
 
                 if(spaceShip.position.x > canv.width - spaceShip.width){
                     spaceShip.position.x = canv.width - spaceShip.width
@@ -56,20 +108,19 @@
                 if(spaceShip.position.x < 0){
                     spaceShip.position.x = 0 - spaceShip.position.x
                 }
-                spaceShip.lazer.fire();
             }, 100);
 
             document.addEventListener("keyup", (e) => {
                 if(e.code === "ArrowLeft"){
                     spaceShip.position.x -= spaceShip.step
                 }
-
+                
                 if(e.code === "ArrowRight"){
                     spaceShip.position.x += spaceShip.step
                 }
                 
                 if(e.code === "Space"){
-                    spaceShip.lazer.drawLazer( spaceShip.position.x, spaceShip.position.y);
+                    spaceShip.shot();
                 }
             })
 
