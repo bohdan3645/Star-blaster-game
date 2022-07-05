@@ -19,10 +19,27 @@
                     x: 0,
                     y: 0
                 },
-                step: 10
+                step: 10,
+                lazer: {
+                    color: 'red',
+                    height: 15,
+                    width: 5,
+                    positionOffset: 0,
+                    speed: 50,
+
+                    drawLazer(positionX, positionY) {
+                        ctx.fillStyle = this.color;
+                        ctx.fillRect(positionX + 12, positionY + this.positionOffset, this.width, this.height);
+                    },
+
+                    fire() {
+                        this.positionOffset.y += this.speed;
+                    }
+                }
             }
 
             spaceShip.position.y = canv.height - spaceShip.height
+            
 
             setInterval(() => {
                 ctx.fillStyle = "grey";
@@ -31,12 +48,15 @@
                 ctx.fillStyle = spaceShip.color;
                 ctx.fillRect(spaceShip.position.x, spaceShip.position.y, spaceShip.width, spaceShip.height);
 
+                
+
                 if(spaceShip.position.x > canv.width - spaceShip.width){
                     spaceShip.position.x = canv.width - spaceShip.width
                 }
                 if(spaceShip.position.x < 0){
                     spaceShip.position.x = 0 - spaceShip.position.x
                 }
+                spaceShip.lazer.fire();
             }, 100);
 
             document.addEventListener("keyup", (e) => {
@@ -46,6 +66,10 @@
 
                 if(e.code === "ArrowRight"){
                     spaceShip.position.x += spaceShip.step
+                }
+                
+                if(e.code === "Space"){
+                    spaceShip.lazer.drawLazer( spaceShip.position.x, spaceShip.position.y);
                 }
             })
 
