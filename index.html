@@ -111,24 +111,33 @@
             }, 50);
 
 
-            let clear = null;
+            let clearLeft = null;
+            let clearRight = null;
             document.addEventListener("keydown", (e) => {
                 if(e.code === "ArrowLeft"){
                     if(e.repeat) return;
-                    if(clear) {
-                        clearInterval(clear);
+                    if(clearRight) {
+                        clearInterval(clearRight);
                         clear = null;
                     }
-                    clear = setInterval(() => {spaceShip.position.x -= spaceShip.step}, 50);
+                    if(clearLeft) {
+                        clearInterval(clearLeft);
+                        clear = null;
+                    }
+                    clearLeft = setInterval(() => {spaceShip.position.x -= spaceShip.step}, 50);
                 };
 
                 if(e.code === "ArrowRight"){
                     if(e.repeat) return;
-                    if(clear) {
-                        clearInterval(clear);
+                    if(clearLeft) {
+                        clearInterval(clearLeft);
                         clear = null;
                     }
-                    clear = setInterval(() => {spaceShip.position.x += spaceShip.step}, 50);
+                    if(clearRight) {
+                        clearInterval(clearRight);
+                        clear = null;
+                    }
+                    clearRight = setInterval(() => {spaceShip.position.x += spaceShip.step}, 50);
                 };
                 
                 if(e.code === "Space"){
@@ -138,10 +147,15 @@
             })
 
             document.addEventListener('keyup' , (e) => {
-                if(e.code === "ArrowLeft" || e.code === "ArrowRight") {
-                    if(!clear) return;
-                    clearInterval(clear);
-                    clear = null;
+                if(e.code === "ArrowLeft") {
+                    if(!clearLeft) return;
+                    clearInterval(clearLeft);
+                    clearLeft = null;
+                };
+                if(e.code === "ArrowRight") {
+                    if(!clearRight) return;
+                    clearInterval(clearRight);
+                    clearRight = null;
                 };
             })
 
