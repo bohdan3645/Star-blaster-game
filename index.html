@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <canvas id="canvas">
+
+        </canvas>
+        <script>
+            const canv = document.getElementById("canvas");
+            const ctx = canv.getContext("2d");
+
+            canv.width = 300;
+            canv.height = 300;
+
+            const spaceShip = {
+                color: "blue",
+                width: 30,
+                height: 30,
+                position: {
+                    x: 0,
+                    y: 0
+                },
+                step: 10
+            }
+
+            spaceShip.position.y = canv.height - spaceShip.height
+
+            setInterval(() => {
+                ctx.fillStyle = "grey";
+                ctx.fillRect(0, 0, canv.width, canv.height);
+
+                ctx.fillStyle = spaceShip.color;
+                ctx.fillRect(spaceShip.position.x, spaceShip.position.y, spaceShip.width, spaceShip.height);
+
+                if(spaceShip.position.x > canv.width - spaceShip.width){
+                    spaceShip.position.x = canv.width - spaceShip.width
+                }
+                if(spaceShip.position.x < 0){
+                    spaceShip.position.x = 0 - spaceShip.position.x
+                }
+            }, 100);
+
+            document.addEventListener("keyup", (e) => {
+                if(e.code === "ArrowLeft"){
+                    spaceShip.position.x -= spaceShip.step
+                }
+
+                if(e.code === "ArrowRight"){
+                    spaceShip.position.x += spaceShip.step
+                }
+            })
+
+        </script>
+    </body>
+</html>
