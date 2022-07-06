@@ -32,6 +32,13 @@
             canv.width = 300;
             canv.height = 600;
 
+            //images
+            const shipImage = new Image();
+            shipImage.src = './assets/ship.png';
+            const foeImage = new Image();
+            foeImage.src = './assets/foe.png';
+            const bulletImage = new Image();
+            bulletImage.src = './assets/bullet.png';
 
             const gameOver = (timersArr) => {
                 timersArr.forEach(timer => {
@@ -48,8 +55,8 @@
                     this.id = Date.now() + Math.random();
                     this.isActive = false;
                     this.color = 'red';
-                    this.height = 15;
-                    this.width = 5;
+                    this.height = 25;
+                    this.width = 6;
                     this.startPositionX = 0;
                     this.positionOffsetY = 0;
                     this.positionOffsetX = (shipWidth - this.width) / 2;
@@ -68,8 +75,9 @@
                         this.positionOffsetY += this.step;
                     }
 
-                    ctx.fillStyle = this.color;
-                    ctx.fillRect(this.startPositionX, positionY - this.positionOffsetY, this.width, this.height);
+                    // ctx.fillStyle = this.color;
+                    // ctx.fillRect(this.startPositionX, positionY - this.positionOffsetY, this.width, this.height);
+                    ctx.drawImage(bulletImage, this.startPositionX, positionY - this.positionOffsetY, this.width, this.height)
                 }
 
                 activate(positionX) {
@@ -100,7 +108,7 @@
                     //draw stars
                     this.starsPositions.forEach(position => {
                         ctx.fillStyle = this.starColor;
-                        ctx.fillRect(position.x, position.y, 2, 2);
+                        ctx.fillRect(position.x, position.y, 1, 1);
                     });
                 },
 
@@ -131,8 +139,8 @@
 
             const spaceShip = {
                 color: "blue",
-                width: 30,
-                height: 30,
+                width: 40,
+                height: 40,
                 position: {
                     x: 0,
                     y: 0
@@ -146,8 +154,9 @@
                 },
 
                 drawShip() {
-                    ctx.fillStyle = this.color;
-                    ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+                    // ctx.fillStyle = this.color;
+                    // ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+                    ctx.drawImage(shipImage, this.position.x, this.position.y, this.width, this.height);
                 },
 
                 drawBullets() {
@@ -188,8 +197,8 @@
                 constructor(positionX) {
                     this.id = Date.now() + Math.random();
                     this.color = 'violet';
-                    this.width = 25;
-                    this.height = 25;
+                    this.width = 35;
+                    this.height = 21;
                     this.step = 2;
                     this.position = {
                             x: positionX,
@@ -198,8 +207,9 @@
                 }
                 drawFoe() {
                     this.position.y += this.step;
-                    ctx.fillStyle = this.color;
-                    ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+                    // ctx.fillStyle = this.color;
+                    // ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+                    ctx.drawImage(foeImage, this.position.x, this.position.y, this.width, this.height);
                 }
             }
 
@@ -237,8 +247,11 @@
                 }
             }
 
+            //set initial settings
             spaceShip.setInitialShipPosition();
             background.genStars();
+            foes.addFoesRow();
+
 
             const detectFoeShipCollition = () => {
                 //foe hit space ship
@@ -286,94 +299,104 @@
                 });
             };
 
-            const newFoesRawTimer = foes.addFoesRow();
-            setInterval(() => {
-                foes.addFoesRow();
-            }, 1000);
+            let newFoesRawTimer, gameTimer;
 
-            const gameTimer = setInterval(() => {
-                //draw canvas background
-                
-                background.drawBackground();
+            const initGame = () => {
+                newFoesRawTimer = setInterval(() => {
+                    foes.addFoesRow();
+                }, 1000);
 
-                //draw ship
-                spaceShip.drawShip();
+                gameTimer = setInterval(() => {
+                    //draw canvas background
+                    background.drawBackground();
 
-                //draw foes
-                foes.foesRows.forEach(raw => {
-                    raw.forEach(foe => {
-                        foe.drawFoe();
+                    //draw all bullets
+                    spaceShip.drawBullets();
+
+                    //draw ship
+                    spaceShip.drawShip();
+
+                    //draw foes
+                    foes.foesRows.forEach(raw => {
+                        raw.forEach(foe => {
+                            foe.drawFoe();
+                        });
                     });
-                });
 
-                //detect if bullet his foe
-                detectBulletFoeCollition();
-                //detect if foe hit ship (game over)
-                detectFoeShipCollition();
+                    //detect if bullet his foe
+                    detectBulletFoeCollition();
+                    //detect if foe hit ship (game over)
+                    detectFoeShipCollition();
 
-                //display score
-                score.displayScore();
+                    //display score
+                    score.displayScore();
 
-                //draw all bullets
-                spaceShip.drawBullets();
-
-                //preven ship form going beyond canvas
-                if(spaceShip.position.x > canv.width - spaceShip.width){
-                    spaceShip.position.x = canv.width - spaceShip.width
-                }
-                if(spaceShip.position.x < 0){
-                    spaceShip.position.x = 0;
-                }
-            }, 50);
-
-
-            let clearLeft = null;
-            let clearRight = null;
-            document.addEventListener("keydown", (e) => {
-                if(e.code === "ArrowLeft"){
-                    if(e.repeat) return;
-                    if(clearRight) {
-                        clearInterval(clearRight);
-                        clear = null;
+                    //preven ship form going beyond canvas
+                    if(spaceShip.position.x > canv.width - spaceShip.width){
+                        spaceShip.position.x = canv.width - spaceShip.width
                     }
-                    if(clearLeft) {
+                    if(spaceShip.position.x < 0){
+                        spaceShip.position.x = 0;
+                    }
+                }, 50);
+
+                //anable keyboard piloting
+                let clearLeft = null;
+                let clearRight = null;
+                document.addEventListener("keydown", (e) => {
+                    if(e.code === "ArrowLeft"){
+                        if(e.repeat) return;
+                        if(clearRight) {
+                            clearInterval(clearRight);
+                            clear = null;
+                        }
+                        if(clearLeft) {
+                            clearInterval(clearLeft);
+                            clear = null;
+                        }
+                        clearLeft = setInterval(() => {spaceShip.position.x -= spaceShip.step}, 50);
+                    };
+
+                    if(e.code === "ArrowRight"){
+                        if(e.repeat) return;
+                        if(clearLeft) {
+                            clearInterval(clearLeft);
+                            clear = null;
+                        }
+                        if(clearRight) {
+                            clearInterval(clearRight);
+                            clear = null;
+                        }
+                        clearRight = setInterval(() => {spaceShip.position.x += spaceShip.step}, 50);
+                    };
+                    
+                    if(e.code === "Space"){
+                        if(e.repeat) return;
+                        spaceShip.shot();
+                    };
+                })
+
+                document.addEventListener('keyup' , (e) => {
+                    if(e.code === "ArrowLeft") {
+                        if(!clearLeft) return;
                         clearInterval(clearLeft);
-                        clear = null;
-                    }
-                    clearLeft = setInterval(() => {spaceShip.position.x -= spaceShip.step}, 50);
-                };
-
-                if(e.code === "ArrowRight"){
-                    if(e.repeat) return;
-                    if(clearLeft) {
-                        clearInterval(clearLeft);
-                        clear = null;
-                    }
-                    if(clearRight) {
+                        clearLeft = null;
+                    };
+                    if(e.code === "ArrowRight") {
+                        if(!clearRight) return;
                         clearInterval(clearRight);
-                        clear = null;
-                    }
-                    clearRight = setInterval(() => {spaceShip.position.x += spaceShip.step}, 50);
-                };
-                
-                if(e.code === "Space"){
-                    if(e.repeat) return;
-                    spaceShip.shot();
-                };
-            })
+                        clearRight = null;
+                    };
+                })
+            };
 
-            document.addEventListener('keyup' , (e) => {
-                if(e.code === "ArrowLeft") {
-                    if(!clearLeft) return;
-                    clearInterval(clearLeft);
-                    clearLeft = null;
-                };
-                if(e.code === "ArrowRight") {
-                    if(!clearRight) return;
-                    clearInterval(clearRight);
-                    clearRight = null;
-                };
-            })
+            shipImage.onload = () => {
+                foeImage.onload = () => {
+                    bulletImage.onload = () => {
+                        initGame();
+                    }
+                }
+            };
 
         </script>
     </body>
