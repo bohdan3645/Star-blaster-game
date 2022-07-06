@@ -1,15 +1,37 @@
 <!DOCTYPE html>
 <html>
-    <body>
-        <canvas id="canvas">
+    <head>
+        <style>
+            body {
+                display: flex;
+                justify-content: center;
+            }
 
-        </canvas>
+            .container {
+                position: relative;
+            }
+
+            .score {
+                position: absolute;
+                top: 20px;
+                left: 105%;
+                white-space: nowrap;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <canvas id="canvas"></canvas>
+            <h3 id="score" class="score">Score: 0</h3>
+        </div>
         <script>
             const canv = document.getElementById("canvas");
             const ctx = canv.getContext("2d");
+            const scoreDisplay = document.getElementById('score');
 
             canv.width = 300;
             canv.height = 600;
+
 
             const gameOver = (timersArr) => {
                 timersArr.forEach(timer => {
@@ -62,6 +84,18 @@
                     if(this.positionOffsetY > canvHeight) {
                         this.isOffCanv = true;
                     };
+                }
+            }
+
+            const score = {
+                currentScore: 0,
+
+                updateScore() {
+                    this.currentScore += 50;
+                },
+
+                displayScore() {
+                    scoreDisplay.innerHTML = `Score: ${this.currentScore}`;
                 }
             }
 
@@ -192,6 +226,7 @@
                     foes.removeEmptyRow(rowIndex);
                     //remove bullet
                     spaceShip.removeUsedBullet(bulletId);
+                    score.updateScore();
                 }
 
                 //if collide on X axis
@@ -245,6 +280,9 @@
                 detectBulletFoeCollition();
                 //detect if foe hit ship (game over)
                 detectFoeShipCollition();
+
+                //display score
+                score.displayScore();
 
                 //draw all bullets
                 spaceShip.drawBullets();
