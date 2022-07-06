@@ -9,7 +9,17 @@
             const ctx = canv.getContext("2d");
 
             canv.width = 300;
-            canv.height = 300;
+            canv.height = 600;
+
+            const gameOver = (timersArr) => {
+                timersArr.forEach(timer => {
+                    clearInterval(timer);
+                });
+                ctx.font = "30px Arial";
+                ctx.textAlign = "center";
+                ctx.fillStyle = 'red';
+                ctx.fillText("Game Over", canv.width / 2, canv.height / 2);
+            };
 
             class Bullet {
                 constructor(shipWidth) {
@@ -55,22 +65,6 @@
                 }
             }
 
-            class Foe {
-                constructor(positionX, positionY) {
-                    this.id = Date.now() + Math.random();
-                    this.color = 'violet';
-                    this.width = 30;
-                    this.height = 30;
-                    this.position = {
-                            x: positionX,
-                            y: positionY
-                        };
-                }
-                drawFoe() {
-                    ctx.fillStyle = this.color;
-                    ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
-                }
-            }
 
             const spaceShip = {
                 color: "blue",
@@ -118,22 +112,121 @@
 
                     //shot first bullet in charge
                     this.charge[0].activate(this.position.x);
+                },
+
+                removeUsedBullet(bulletId) {
+                    this.charge = spaceShip.charge.filter(bullet => {
+                        return bullet.id !== bulletId;
+                    });
+                }
+            }
+
+            class Foe {
+                constructor(positionX) {
+                    this.id = Date.now() + Math.random();
+                    this.color = 'violet';
+                    this.width = 25;
+                    this.height = 25;
+                    this.step = 2;
+                    this.position = {
+                            x: positionX,
+                            y: -this.height
+                        };
+                }
+                drawFoe() {
+                    this.position.y += this.step;
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
                 }
             }
 
 
+            const foes = {
+                foesNum: 7,
+                foesRows: [],
+
+                addFoesRow() {
+                    const foesRow = []
+                    for(let i = 0; i < this.foesNum; i++) {
+                        const spaceBetween = (canv.width - this.foesNum * 30) / (this.foesNum + 1);
+                        foesRow.push(new Foe(30 * i + spaceBetween * (i + 1)));
+                    };
+                    this.foesRows.push(foesRow);
+
+                    //variate number of foes in row
+                    if(this.foesNum % 2) {
+                        this.foesNum = 6;
+                    } else {
+                        this.foesNum = 7;
+                    }
+                },
+
+                killFoe(rowIndex, foeId) {
+                    this.foesRows[rowIndex] = this.foesRows[rowIndex].filter(foe => {
+                        return foe.id !== foeId;
+                    });
+                },
+
+                removeEmptyRow(rowIndex) {
+                    if(this.foesRows[rowIndex].length <= 0) {
+                        this.foesRows.splice(rowIndex, 1);
+                    };
+                }
+            }
 
             spaceShip.setInitialShipPosition();
 
-            const foesNum = 7;
-            const positionY = 10;
-            let foes = [];
-            for(let i = 0; i < 7; i++) {
-                const spaceBetween = (canv.width - foesNum * 30) / (foesNum + 1);
-                foes.push(new Foe(30 * i + spaceBetween * (i + 1), positionY));
-            }
+            const detectFoeShipCollition = () => {
+                //foe hit space ship
+                if(foes.foesRows[0][0].position.y + foes.foesRows[0][0].height >= canv.height) {
+                    gameOver([gameTimer, newFoesRawTimer]);
+                };
+            };
 
+            const detectBulletFoeCollition = () => {
+                //do if bullet collide with foe
+                const actionsIfCollide = (rowIndex, foeId, bulletId) => {
+                    //kill foe
+                    foes.killFoe(rowIndex, foeId);
+                    //remove raw of foes if empty
+                    foes.removeEmptyRow(rowIndex);
+                    //remove bullet
+                    spaceShip.removeUsedBullet(bulletId);
+                }
+
+                //if collide on X axis
+                const collideAxisX = (bulletId, rowIndex, bulletContactArea) => {
+                    foes.foesRows[rowIndex].forEach(foe => {
+                        const foeContactArea = { leftConer: foe.position.x, rightConer: foe.position.x + foe.width };
+                        if((bulletContactArea.leftConer >= foeContactArea.leftConer && bulletContactArea.leftConer <= foeContactArea.rightConer) ||
+                        (bulletContactArea.rightConer >= foeContactArea.leftConer && bulletContactArea.rightConer <= foeContactArea.rightConer)) {
+                            actionsIfCollide(rowIndex, foe.id, bulletId);
+                        };
+                    });
+                };
+
+                //if collide on Y axis
+                const collideAxisY = (bullet) => {
+                    foes.foesRows.forEach((row, rowIndex) => {
+                        if((canv.height - bullet.positionOffsetY - 60) <= foes.foesRows[rowIndex][0].position.y) {
+                            const bulletContactArea = { leftConer: bullet.startPositionX, rightConer: bullet.startPositionX + bullet.width};
+                            collideAxisX(bullet.id, rowIndex, bulletContactArea);
+                        };
+                    });
+                }
+
+                //buttet collide with foe
+                spaceShip.charge.forEach(bullet => {
+                    collideAxisY(bullet);
+                });
+            };
+
+            const newFoesRawTimer = foes.addFoesRow();
             setInterval(() => {
+                foes.addFoesRow();
+            }, 1000);
+
+            const gameTimer = setInterval(() => {
                 //draw canvas background
                 ctx.fillStyle = "grey";
                 ctx.fillRect(0, 0, canv.width, canv.height);
@@ -142,30 +235,16 @@
                 spaceShip.drawShip();
 
                 //draw foes
-                foes.forEach(foe => {
-                    foe.drawFoe();
+                foes.foesRows.forEach(raw => {
+                    raw.forEach(foe => {
+                        foe.drawFoe();
+                    });
                 });
 
-                //detect collision
-                spaceShip.charge.forEach(bullet => {
-                    if((canv.height - bullet.positionOffsetY - 60) === positionY) {
-                        const bulletContactArea = { leftConer: bullet.startPositionX, rightConer: bullet.startPositionX + bullet.width};
-                        foes.forEach((foe, i) => {
-                            const foeContactArea = { leftConer: foe.position.x, rightConer: foe.position.x + foe.width };
-                            if((bulletContactArea.leftConer >= foeContactArea.leftConer && bulletContactArea.leftConer <= foeContactArea.rightConer) ||
-                            (bulletContactArea.rightConer >= foeContactArea.leftConer && bulletContactArea.rightConer <= foeContactArea.rightConer)) {
-                                //kill foe
-                                foes = foes.filter(fo => {
-                                    return fo.id !== foe.id
-                                })
-                                //remove bullet
-                                spaceShip.charge = spaceShip.charge.filter(bul => {
-                                    return bul.id !== bullet.id;
-                                })
-                            };
-                        });
-                    };
-                });
+                //detect if bullet his foe
+                detectBulletFoeCollition();
+                //detect if foe hit ship (game over)
+                detectFoeShipCollition();
 
                 //draw all bullets
                 spaceShip.drawBullets();
