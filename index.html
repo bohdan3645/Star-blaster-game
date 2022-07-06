@@ -87,6 +87,35 @@
                 }
             }
 
+            const background = {
+                bgColor: '#222',
+                starColor: 'white',
+                starsNum: 500,
+                starsPositions: [],
+
+                drawBackground() {
+                    ctx.fillStyle = this.bgColor;
+                    ctx.fillRect(0, 0, canv.width, canv.height);
+
+                    //draw stars
+                    this.starsPositions.forEach(position => {
+                        ctx.fillStyle = this.starColor;
+                        ctx.fillRect(position.x, position.y, 2, 2);
+                    });
+                },
+
+                genStars() {
+                    for(let i = 0; i < this.starsNum; i++) {
+                        const randomCanvasPosition = (maxNum) => {
+                            return Math.floor(Math.random() * maxNum);
+                        };
+                        const positionX = randomCanvasPosition(canv.width);
+                        const positionY = randomCanvasPosition(canv.height);
+                        this.starsPositions.push({x: positionX, y: positionY});
+                    }
+                }
+            }
+
             const score = {
                 currentScore: 0,
 
@@ -209,6 +238,7 @@
             }
 
             spaceShip.setInitialShipPosition();
+            background.genStars();
 
             const detectFoeShipCollition = () => {
                 //foe hit space ship
@@ -263,8 +293,8 @@
 
             const gameTimer = setInterval(() => {
                 //draw canvas background
-                ctx.fillStyle = "grey";
-                ctx.fillRect(0, 0, canv.width, canv.height);
+                
+                background.drawBackground();
 
                 //draw ship
                 spaceShip.drawShip();
