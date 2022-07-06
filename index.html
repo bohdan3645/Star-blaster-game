@@ -213,9 +213,53 @@
                 }
             }
 
+            class Explosion {
+                constructor(positionX, positionY) {
+                    this.color = 'rgb(255, 166, 0)';
+                    this.opacity = 1;
+                    this.radius = 0;
+                    this.position = {
+                        x: positionX,
+                        y: positionY
+                    }
+                }
+
+                drawExpl() {
+                    this.opacity -= 0.15;
+                    this.color = `rgba(255, 166, 0, ${this.opacity}`;
+                    this.radius += 5;
+                    const circle = new Path2D();  //Declaration
+                    circle.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false);
+
+                    ctx.fillStyle = this.color;
+                    ctx.fill(circle); //pass circle to context
+
+                    ctx.stroke(circle)
+                }
+            }
+
+            const explosions = {
+                explArr: [],
+
+                drawAllExpls() {
+                    this.explArr.forEach((expl) => {
+                        expl.drawExpl()
+                    });
+                },
+
+                explode(positionX, positionY) {
+                    this.explArr.push(new Explosion(positionX, positionY));
+
+                    //explosion subside
+                    setTimeout(() => {
+                        this.explArr.shift();
+                    }, 300);
+                }
+            }
+
 
             const foes = {
-                foesNum: 7,
+                foesNum: 5,
                 foesRows: [],
 
                 addFoesRow() {
@@ -228,9 +272,9 @@
 
                     //variate number of foes in row
                     if(this.foesNum % 2) {
-                        this.foesNum = 6;
+                        this.foesNum -= 1;
                     } else {
-                        this.foesNum = 7;
+                        this.foesNum += 1;
                     }
                 },
 
@@ -262,9 +306,11 @@
 
             const detectBulletFoeCollition = () => {
                 //do if bullet collide with foe
-                const actionsIfCollide = (rowIndex, foeId, bulletId) => {
+                const actionsIfCollide = (rowIndex, foeId, bulletId, foePositionX, foePositionY) => {
                     //kill foe
                     foes.killFoe(rowIndex, foeId);
+                    //explode foe
+                    explosions.explode(foePositionX, foePositionY);
                     //remove raw of foes if empty
                     foes.removeEmptyRow(rowIndex);
                     //remove bullet
@@ -278,7 +324,7 @@
                         const foeContactArea = { leftConer: foe.position.x, rightConer: foe.position.x + foe.width };
                         if((bulletContactArea.leftConer >= foeContactArea.leftConer && bulletContactArea.leftConer <= foeContactArea.rightConer) ||
                         (bulletContactArea.rightConer >= foeContactArea.leftConer && bulletContactArea.rightConer <= foeContactArea.rightConer)) {
-                            actionsIfCollide(rowIndex, foe.id, bulletId);
+                            actionsIfCollide(rowIndex, foe.id, bulletId, foe.position.x + foe.width / 2, foe.position.y + foe.height / 2);
                         };
                     });
                 };
@@ -315,6 +361,9 @@
 
                     //draw ship
                     spaceShip.drawShip();
+
+                    //draw explosions
+                    explosions.drawAllExpls();
 
                     //draw foes
                     foes.foesRows.forEach(raw => {
