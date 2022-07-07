@@ -35,20 +35,14 @@
             //images
             const shipImage = new Image();
             shipImage.src = './assets/ship.png';
-            const foeImage = new Image();
-            foeImage.src = './assets/foe.png';
+            const foeLightImage = new Image();
+            foeLightImage.src = './assets/foe-light.png';
+            const foeHeavyImage = new Image();
+            foeHeavyImage.src = './assets/foe-heavy.png';
+            const foeHeavyHitImage = new Image();
+            foeHeavyHitImage.src = './assets/foe-heavy-hit.png';
             const bulletImage = new Image();
             bulletImage.src = './assets/bullet.png';
-
-            const gameOver = (timersArr) => {
-                timersArr.forEach(timer => {
-                    clearInterval(timer);
-                });
-                ctx.font = "30px Arial";
-                ctx.textAlign = "center";
-                ctx.fillStyle = 'red';
-                ctx.fillText("Game Over", canv.width / 2, canv.height / 2);
-            };
 
             class Bullet {
                 constructor(shipWidth) {
@@ -92,6 +86,82 @@
                     if(this.positionOffsetY > canvHeight) {
                         this.isOffCanv = true;
                     };
+                }
+            }
+
+            class Foe {
+                constructor(positionX, image) {
+                    this.image = foeLightImage;
+                    this.id = Date.now() + Math.random();
+                    this.color = 'violet';
+                    this.width = 35;
+                    this.height = 21;
+                    this.step = 2;
+                    this.position = {
+                            x: positionX,
+                            y: -this.height
+                        };
+                }
+                drawFoe() {
+                    this.position.y += this.step;
+                    // ctx.fillStyle = this.color;
+                    // ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+                    ctx.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
+                }
+            }
+
+            class FoeLight extends Foe {
+                constructor(positionX, image) {
+                    super(positionX, image);
+                    this.health = 1;
+                    this.image = foeLightImage;
+                }
+            }
+
+            class FoeHeavy extends Foe {
+                constructor(positionX, image) {
+                    super(positionX, image);
+                    this.health = 2;
+                    this.image = foeHeavyImage;
+                    this.width = 40;
+                    this.height = 24;
+                }
+            }
+
+            class FoeSuperHeavy extends Foe {
+                constructor(positionX, image) {
+                    super(positionX, image);
+                    this.health = 2;
+                    this.image = foeHeavyImage;
+                    this.width = 40;
+                    this.height = 24;
+                }
+            }
+
+            
+
+            class Explosion {
+                constructor(positionX, positionY) {
+                    this.color = 'rgb(255, 166, 0)';
+                    this.opacity = 1;
+                    this.radius = 0;
+                    this.position = {
+                        x: positionX,
+                        y: positionY
+                    }
+                }
+
+                drawExpl() {
+                    this.opacity -= 0.15;
+                    this.color = `rgba(255, 166, 0, ${this.opacity}`;
+                    this.radius += 5;
+                    const circle = new Path2D();  //Declaration
+                    circle.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false);
+
+                    ctx.fillStyle = this.color;
+                    ctx.fill(circle); //pass circle to context
+
+                    ctx.stroke(circle)
                 }
             }
 
@@ -193,51 +263,6 @@
                 }
             }
 
-            class Foe {
-                constructor(positionX) {
-                    this.id = Date.now() + Math.random();
-                    this.color = 'violet';
-                    this.width = 35;
-                    this.height = 21;
-                    this.step = 2;
-                    this.position = {
-                            x: positionX,
-                            y: -this.height
-                        };
-                }
-                drawFoe() {
-                    this.position.y += this.step;
-                    // ctx.fillStyle = this.color;
-                    // ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
-                    ctx.drawImage(foeImage, this.position.x, this.position.y, this.width, this.height);
-                }
-            }
-
-            class Explosion {
-                constructor(positionX, positionY) {
-                    this.color = 'rgb(255, 166, 0)';
-                    this.opacity = 1;
-                    this.radius = 0;
-                    this.position = {
-                        x: positionX,
-                        y: positionY
-                    }
-                }
-
-                drawExpl() {
-                    this.opacity -= 0.15;
-                    this.color = `rgba(255, 166, 0, ${this.opacity}`;
-                    this.radius += 5;
-                    const circle = new Path2D();  //Declaration
-                    circle.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false);
-
-                    ctx.fillStyle = this.color;
-                    ctx.fill(circle); //pass circle to context
-
-                    ctx.stroke(circle)
-                }
-            }
-
             const explosions = {
                 explArr: [],
 
@@ -257,7 +282,6 @@
                 }
             }
 
-
             const foes = {
                 foesNum: 5,
                 foesRows: [],
@@ -265,8 +289,15 @@
                 addFoesRow() {
                     const foesRow = []
                     for(let i = 0; i < this.foesNum; i++) {
-                        const spaceBetween = (canv.width - this.foesNum * 30) / (this.foesNum + 1);
-                        foesRow.push(new Foe(30 * i + spaceBetween * (i + 1)));
+                        const randomNum = Math.random();
+                        if(randomNum > 0.2) {
+                            const spaceBetween = (canv.width - this.foesNum * 35) / (this.foesNum + 1);
+                            foesRow.push(new FoeLight((35 * i + spaceBetween * (i + 1))));
+                        } else {
+                            const spaceBetween = (canv.width - this.foesNum * 40) / (this.foesNum + 1);
+                            foesRow.push(new FoeHeavy((40 * i + spaceBetween * (i + 1))));
+                        }
+                        
                     };
                     this.foesRows.push(foesRow);
 
@@ -279,9 +310,19 @@
                 },
 
                 killFoe(rowIndex, foeId) {
-                    this.foesRows[rowIndex] = this.foesRows[rowIndex].filter(foe => {
-                        return foe.id !== foeId;
+                    const currentFoe = this.foesRows[rowIndex].find(foe => {
+                        return foe.id === foeId;
                     });
+                    //decrease health by 1
+                    currentFoe.health -= 1;
+                    //change appearance to broken
+                    currentFoe.image = foeHeavyHitImage;
+                    //if no health then kill
+                    if(currentFoe.health <=0) {
+                        this.foesRows[rowIndex] = this.foesRows[rowIndex].filter(foe => {
+                            return foe.id !== foeId;
+                        });
+                    };
                 },
 
                 removeEmptyRow(rowIndex) {
@@ -296,6 +337,15 @@
             background.genStars();
             foes.addFoesRow();
 
+            const gameOver = (timersArr) => {
+                timersArr.forEach(timer => {
+                    clearInterval(timer);
+                });
+                ctx.font = "30px Arial";
+                ctx.textAlign = "center";
+                ctx.fillStyle = 'red';
+                ctx.fillText("Game Over", canv.width / 2, canv.height / 2);
+            };
 
             const detectFoeShipCollition = () => {
                 //foe hit space ship
@@ -315,6 +365,7 @@
                     foes.removeEmptyRow(rowIndex);
                     //remove bullet
                     spaceShip.removeUsedBullet(bulletId);
+                    //update score
                     score.updateScore();
                 }
 
@@ -346,7 +397,6 @@
             };
 
             let newFoesRawTimer, gameTimer;
-
             const initGame = () => {
                 newFoesRawTimer = setInterval(() => {
                     foes.addFoesRow();
@@ -440,9 +490,13 @@
             };
 
             shipImage.onload = () => {
-                foeImage.onload = () => {
-                    bulletImage.onload = () => {
-                        initGame();
+                foeLightImage.onload = () => {
+                    foeHeavyImage.onload = () => {
+                        foeHeavyHitImage.onload = () => {
+                            bulletImage.onload = () => {
+                                initGame();
+                            }
+                        }
                     }
                 }
             };
