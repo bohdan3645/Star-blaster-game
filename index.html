@@ -43,6 +43,7 @@
             foeHeavyHitImage.src = './assets/foe-heavy-hit.png';
             const bulletImage = new Image();
             bulletImage.src = './assets/bullet.png';
+            
 
             class Bullet {
                 constructor(shipWidth) {
@@ -54,7 +55,7 @@
                     this.startPositionX = 0;
                     this.positionOffsetY = 0;
                     this.positionOffsetX = (shipWidth - this.width) / 2;
-                    this.step = 10;
+                    this.step = 15;
                     this.isOffCanv = false;
                 }
 
@@ -132,9 +133,9 @@
                 constructor(positionX, image) {
                     super(positionX, image);
                     this.health = 2;
-                    this.image = foeHeavyImage;
-                    this.width = 40;
-                    this.height = 24;
+                    this.image = foeSuperHeavyImage;
+                    this.width = 50;
+                    this.height = 45;
                 }
             }
 
@@ -152,7 +153,7 @@
                 }
 
                 drawExpl() {
-                    this.opacity -= 0.15;
+                    this.opacity -= 0.10;
                     this.color = `rgba(255, 166, 0, ${this.opacity}`;
                     this.radius += 5;
                     const circle = new Path2D();  //Declaration
@@ -294,8 +295,8 @@
                             const spaceBetween = (canv.width - this.foesNum * 35) / (this.foesNum + 1);
                             foesRow.push(new FoeLight((35 * i + spaceBetween * (i + 1))));
                         } else {
-                            const spaceBetween = (canv.width - this.foesNum * 40) / (this.foesNum + 1);
-                            foesRow.push(new FoeHeavy((40 * i + spaceBetween * (i + 1))));
+                            const spaceBetween = (canv.width - this.foesNum * 50) / (this.foesNum + 1);
+                            foesRow.push(new FoeHeavy((50 * i + spaceBetween * (i + 1))));
                         }
                         
                     };
@@ -489,17 +490,17 @@
                 })
             };
 
-            shipImage.onload = () => {
-                foeLightImage.onload = () => {
-                    foeHeavyImage.onload = () => {
-                        foeHeavyHitImage.onload = () => {
-                            bulletImage.onload = () => {
-                                initGame();
-                            }
-                        }
-                    }
-                }
-            };
+            let loadedImagesCount = 0;
+            const images = [shipImage, foeLightImage, foeHeavyImage, foeHeavyHitImage, bulletImage];
+            images.forEach(img => {
+                img.onload = () => {
+                    loadedImagesCount++;
+                    if(loadedImagesCount === images.length) {
+                        initGame();
+                    };
+                    console.log(loadedImagesCount);
+                };
+            });
 
         </script>
     </body>
